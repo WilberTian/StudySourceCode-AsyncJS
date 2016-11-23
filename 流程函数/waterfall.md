@@ -1,24 +1,32 @@
-function(tasks, callback) {
-    callback = once(callback || noop);
-    if (!isArray(tasks)) return callback(new Error('First argument to waterfall must be an array of functions'));
-    if (!tasks.length) return callback();
-    var taskIndex = 0;
-    function nextTask(args) {
-        if (taskIndex === tasks.length) {
-            return callback.apply(null, [null].concat(args));
-        }
-        var taskCallback = onlyOnce(rest(function(err, args) {
-            if (err) {
-                return callback.apply(null, [err].concat(args));
+    
+
+    import isArray from 'lodash/isArray';
+    import noop from 'lodash/noop';
+    import once from './internal/once';
+    import rest from './internal/rest';
+    import onlyOnce from './internal/onlyOnce';
+
+    function(tasks, callback) {
+        callback = once(callback || noop);
+        if (!isArray(tasks)) return callback(new Error('First argument to waterfall must be an array of functions'));
+        if (!tasks.length) return callback();
+        var taskIndex = 0;
+        function nextTask(args) {
+            if (taskIndex === tasks.length) {
+                return callback.apply(null, [null].concat(args));
             }
-            nextTask(args);
-        }));
-        args.push(taskCallback);
-        var task = tasks[taskIndex++];
-        task.apply(null, args);
+            var taskCallback = onlyOnce(rest(function(err, args) {
+                if (err) {
+                    return callback.apply(null, [err].concat(args));
+                }
+                nextTask(args);
+            }));
+            args.push(taskCallback);
+            var task = tasks[taskIndex++];
+            task.apply(null, args);
+        }
+        nextTask([]);
     }
-    nextTask([]);
-}
 
 
 使用示例：
